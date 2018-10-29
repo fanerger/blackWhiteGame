@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title></title>
+    <style type="text/css">
+    	html,body{
+    		width: 100%;
+    		margin: 0;
+    		padding: 0;
+    	}
+      div,p,ul,li{padding: 0; margin: 0;}
+      .game-container{
+        width: 6.4rem;
+        margin: 0 auto;
+      }
+      .score-bar{
+        font-size: .4rem;
+        color: red;
+        line-height: .6rem;
+        text-align: center;
+      }
+      .game-ani-wrap{
+        position: relative;
+        background: #fff;
+        width: 6rem;
+        margin: 0 auto;
+        height: 7.2rem;
+        overflow: hidden;
+        border: 1px solid black;
+      }
+      .row-ul{
+        position: absolute;
+        width: 6rem;
+        margin: 0 auto;
+        height: 7.2rem;
+        border-radius: .1rem;
+      }
+      .row-li{
+        overflow: hidden;
+      }
+      .box{
+        display: table-cell;
+        width: 1.5rem;
+        height: 1.8rem;
+      }
+      .black-box{
+        width: 100%;
+        height: 100%;
+        background: #000;
+      }
+      .white-box{
+        width: 100%;
+        height: 100%;
+        background: #fff;
+      }
+      .mask{
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        position: absolute;
+        display: flex;
+        top: 0;
+        left: 0;
+      }
+      .modal{
+        width: 4rem;
+        background: #fff;
+        border-radius: .1rem;
+        margin: auto;
+        overflow: hidden;
+        padding-top: .5rem;
+      }
+      .msg{
+        width: 100%;
+        text-align: center;
+        color: #000;
+        font-size: .3rem;
+      }
+      .score-number{
+        margin-bottom: .1rem;
+      }
+      .btn{
+        background: #bdadfa;
+        color: #000;
+        display: inline-block;
+        width: 3.7rem;
+        height: .7rem;
+        border-radius: .34rem;
+        display: block;
+        margin: 0 auto .2rem;
+        font-size: .26rem;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <script src="./rem.js"></script>
+</head>
+<body>
+  <div class="game-container" id="app">
+    <section class="game-section">
+    <p class="score-bar">{{score}}</p>
+    <div class="game-ani-wrap">
+      <ul class="row-ul" id="rowUl1" :style="`top:${ul1Top}rem`">
+        <li v-for="(row,index) in rows" :key="index" class="row-li">
+          <div class="box" v-for="n in 4" :key="n">
+            <div class="black-box" v-show="n === row.blackIndex" @touchend="next(row, index, 1)"></div>
+            <div class="white-box" v-show="n !== row.blackIndex"></div>
+          </div>
+        </li>
+      </ul>
+      <ul class="row-ul" id="rowUl2" :style="`top:${ul2Top}rem`">
+        <li v-for="(row,index) in rows2" :key="index" class="row-li">
+          <div class="box" v-for="n in 4" :key="n">
+            <div class="black-box" v-show="n === row.blackIndex" @touchend="next(row, index, 2)"></div>
+            <div class="white-box" v-show="n !== row.blackIndex"></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+      <div class="mask" v-show="showModal">
+        <div class="modal">
+          <div class="msg">
+            <p>本次得分</p>
+            <p class="score-number">{{score}}</p>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn2" @touchend="playAgain" >再玩一次</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+<script type="text/javascript">
+var FrameId = null
+const stageHeight = 7.2
+var app = new Vue({
+  el: '#app',
+  data () {
+    return {
+      score: 0,
+      gaming: false,
+      showModal: false,
+      rows: [],
+      rows2: [],
+      // 速度
+      speed: 0.06,
+      ul1Top: 0,
+      ul2Top: -stageHeight
+    }
+  },
+  mounted () {
+    this.initGame()
+  },
+  methods: {
+    // 初始化舞台
+    initStage () {
+      let rows = []
+      for (let i = 0; i < 4; i++) {
+        let row = {blackIndex: this.random(1, 4, true)}
+        rows.push(row)
+      }
+      return rows
+    },
+    // 游戏结束
+    gameOver () {
+      this.gaming = false
+      this.onShowModal()
+    },
+    playAgain () {
+      this.initGame()
+    },
+    initGame () {
+      this.rows = this.initStage()
+      this.rows2 = this.initStage()
+      this.score = 0
+      this.gaming = false
+      this.showModal = false
+      this.ul1Top = 0
+      this.ul2Top = -stageHeight
+      this.speed = 0.06
+    },
+    // 点对了
+    next (row, index, type) {
+      if (!this.gaming) {
+        this.startMove()
+        this.gaming = true
+      }
+      this.score += 1
+      if (type === 1) {
+        this.rows[index]['blackIndex'] = ''
+      } else if (type === 2) {
+        this.rows2[index]['blackIndex'] = ''
+      }
+    },
+    startMove () {
+      FrameId = window.requestAnimationFrame(this.move)
+    },
+    // 动画 2个ul 哪个ul移到舞台下方就重置到舞台最上方
+    move () {
+      if (this.ul1Top >= stageHeight) {
+        for (let i = 0; i < this.rows.length; i++) {
+          if (this.rows[i]['blackIndex'] !== '') {
+            this.gameOver()
+            window.cancelAnimationFrame(FrameId)
+            return
+          }
+        }
+        this.ul1Top = -stageHeight
+        this.rows = this.initStage()
+      }
+      if (this.ul2Top >= stageHeight) {
+        for (let i = 0; i < this.rows2.length; i++) {
+          if (this.rows2[i]['blackIndex'] !== '') {
+            window.cancelAnimationFrame(FrameId)
+            this.gameOver()
+            return
+          }
+        }
+        // 加速度处理
+        if (this.score < 56 || this.score > 100) {
+          this.speed += 0.01
+        }
+        this.ul2Top = -stageHeight
+        this.rows2 = this.initStage()
+      }
+      this.ul1Top += this.speed
+      this.ul2Top += this.speed
+      window.requestAnimationFrame(this.move)
+    },
+    onShowModal () {
+      this.showModal = true
+    },
+    leaveGame () {
+      this.showModal = false
+      this.$router.back()
+    },
+    // 生成任意区间随机数
+    random (min, max, isInt) {
+      if (!min) return window.Math.random()
+      var result = false
+      result = min + window.Math.random() * (max - min + 1)
+      if (isInt) {
+        result = parseInt(result)
+      }
+      return result
+    }
+  }
+})
+</script>
+</html>
