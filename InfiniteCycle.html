@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title></title>
+    <style type="text/css">
+    	html,body{
+    		width: 100%;
+    		margin: 0;
+    		padding: 0;
+    	}
+      div,p,ul,li{padding: 0; margin: 0;}
+      .li{
+        height: 60px;
+        background: yellow;
+        margin: 10px 0 0;
+      }
+      .game-ani-wrap{
+        position: relative;
+        background: #fff;
+        width: 500px;
+        margin: 0 auto;
+        height: 350px;
+        overflow: hidden;
+        border: 1px solid black;
+      }
+      .ul{
+        position: absolute;
+        width: 100%;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+</head>
+<body>
+  <div class="wrap" id="app">
+    <button type="button" name="button" @click="startMove">开始</button>
+    <button type="button" name="button" @click="gameOver">结束</button>
+    <section class="game-ani-wrap">
+      <ul class="ul" :style="`top:${ul1Top}px`">
+        <li class="li" v-for="li,index in rows">{{index}}</li>
+      </ul>
+      <ul class="ul" :style="`top:${ul2Top}px`">
+        <li class="li" v-for="li,index in rows">{{index}}</li>
+      </ul>
+    </section>
+
+  </div>
+</body>
+<script>
+var FrameId = null
+var liHeight = 70
+var app = new Vue({
+  el: '#app',
+  data () {
+    return {
+      rows: [1,2,3,4,5,6,7,8,9],
+      speed: 2,
+      ul1Top: 0,
+      ul2Top: 0,
+      ulHeight: 0,
+      gaming: false
+    }
+  },
+  created () {
+    this.ulHeight = parseInt(liHeight * this.rows.length)
+    this.ul1Top = 0
+    this.ul2Top = this.ulHeight
+  },
+  methods: {
+    startMove () {
+      this.gaming = true
+      FrameId = window.requestAnimationFrame(this.move)
+    },
+    gameOver () {
+      this.gaming = false
+    },
+    // 动画 2个ul 哪个ul移出舞台下就重置它的位置
+    move () {
+      if (this.ul1Top <= -this.ulHeight) {
+        this.ul1Top = this.ulHeight
+      }
+      if (this.ul2Top <= -this.ulHeight) {
+        this.ul2Top = this.ulHeight
+      }
+      this.ul1Top -= this.speed
+      this.ul2Top -= this.speed
+      if (this.gaming) {
+        window.requestAnimationFrame(this.move)
+      }
+    }
+  }
+})
+</script>
+</html>
